@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import random_split, DataLoader
-from dataset import BoneTumorDataset
+from CustomDataset.datasets import BoneTumorDataset
 import os
 from torchvision import transforms
 import argparse
