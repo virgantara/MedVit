@@ -94,6 +94,14 @@ parser.add_argument('--use_center_dataset_split', action='store_true', default=F
 parser.add_argument('--use_structuremap', action='store_true')
 args = parser.parse_args()
 
+def _init_():
+    if not os.path.exists('checkpoints'):
+        os.makedirs('checkpoints')
+    if not os.path.exists('checkpoints/'+args.exp_name):
+        os.makedirs('checkpoints/'+args.exp_name)
+
+_init_()
+
 # data_flag = 'retinamnist'
 # [tissuemnist, pathmnist, chestmnist, dermamnist, octmnist,
 # pnemoniamnist, retinamnist, breastmnist, bloodmnist, tissuemnist, organamnist, organcmnist, organsmnist]
@@ -175,7 +183,6 @@ test_loader = data.DataLoader(dataset=test_dataset, batch_size=2*BATCH_SIZE, shu
 print(train_dataset)
 print("===================")
 print(test_dataset)
-
 
 
 model = MedViT_small(num_classes = n_classes).to(device)
