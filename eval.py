@@ -8,17 +8,9 @@ from util import top_k_accuracy, append_row_to_excel, FocalCE, CLAHE
 import torch.nn as nn
 from torchvision import models
 from tqdm import tqdm
-from models_yolo import (ClassificationModel)
 
-from models import (
-    YOLOv8ClsFromYAML, 
-    ConvNeXtBTXRD, 
-    EfficientNetBTXRD,
-    EfficientNetB4BTXRD,
-    ResNet50
-)
+from MedViT import MedViT_small, MedViT_base, MedViT_large
 
-from model_zoo.medvit.MedViT import MedVit
 import random
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
@@ -155,64 +147,14 @@ def main(args):
 
     
     
-    model_map = {
-        # 'yolov8': lambda: YOLOv8ClsFromYAML(
-        #     yaml_path='yolov8-cls.yaml',
-        #     scale='n',
-        #     num_classes=3,
-        #     pretrained=args.pretrain_path
-        # ),
-        'convnext': lambda: ConvNeXtBTXRD(num_classes=3),
-        'efficientnetb0': lambda: EfficientNetBTXRD(num_classes=3, dropout_p=args.dropout),
-        'efficientnetb4': lambda: EfficientNetB4BTXRD(num_classes=3, dropout_p=args.dropout),
-        'resnet50': lambda: ResNet50(num_classes=3, dropout_p=args.dropout)
-    }
-    
-    if args.model_name == 'van':
-        model = VAN(
-            img_size=args.img_size,
-            num_classes=3,
-            embed_dims=[64, 128, 320, 512], mlp_ratios=[8, 8, 4, 4],
-            norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 5, 27, 3])
-        
-        model.load_state_dict(torch.load(args.model_path, weights_only=True))
-    elif args.model_name == 'yolov11':
-        cfg = os.path.join('yolo/cfg','models','11',f'yolo11{args.yolo_scale}-cls.yaml')
-        model = ClassificationModel(cfg, nc=3, ch=3)
-        model.load_state_dict(torch.load(args.model_path, weights_only=True))
-    elif args.model_name == 'yolov8':
-        cfg = os.path.join('yolo/cfg','models','v8',f'yolov8{args.yolo_scale}-cls.yaml')
-        model = ClassificationModel(cfg, nc=3, ch=3)
-        model.load_state_dict(torch.load(args.model_path, weights_only=True))
-    elif args.model_name == 'medvit':
-        model = MedViT(
-            num_classes=3,
-            stem_chs=[64, 32, 64], 
-            depths=[3, 4, 10, 3], 
-            path_dropout=0.1
-        )
-        model.load_state_dict(torch.load(args.model_path, weights_only=True))
-    else:
-        model = model_map[args.model_name]()
-        model.load_state_dict(torch.load(args.model_path, weights_only=True))
-    
+    model = MedViT_small(num_classes = n_classes).to(device)
+    model.load_state_dict(torch.load(args.model_path, weights_only=True))
     model = model.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
 
     print(f"Total parameters: {sum(p.numel() for p in model.parameters()) / 1e6:.2f}M")
     print(f"Trainable parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.2f}M")
 
-    if args.use_balanced_weight:
-        class_weights = compute_class_weight(
-            class_weight='balanced',
-            classes=[0, 1, 2],
-            y=y_labels  # or collect all labels manually
-        )
-        class_weights = torch.tensor(class_weights, dtype=torch.float).to(device)
-
-        criterion = nn.CrossEntropyLoss(label_smoothing=0.1, weight=class_weights)
-    else:
-        criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
-        
+    
     criterion = FocalCE(weight=class_weights if args.use_balanced_weight else None, gamma=2.0)
 
     val_loss, top1_acc, top5_acc, extra_metrics, cm_image = validate(model, test_loader, criterion, device, class_names=CLASS_NAMES)
