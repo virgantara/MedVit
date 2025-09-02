@@ -71,13 +71,6 @@ parser.add_argument('--project_name', type=str, default='BTXRD', metavar='N',
 
 args = parser.parse_args()
 
-def _init_():
-    if not os.path.exists('checkpoints'):
-        os.makedirs('checkpoints')
-    if not os.path.exists('checkpoints/'+args.exp_name):
-        os.makedirs('checkpoints/'+args.exp_name)
-
-_init_()
 
 # data_flag = 'retinamnist'
 # [tissuemnist, pathmnist, chestmnist, dermamnist, octmnist,
