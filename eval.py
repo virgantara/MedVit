@@ -111,9 +111,9 @@ def main(args):
 
     
     
-    DATASET_DIR = 'data/BTXRD'
+    DATASET_DIR = '../btxrd/data/BTXRD'
     metadata_xlsx_path = os.path.join(DATASET_DIR, 'dataset.xlsx')
-    
+    train_path = os.path.join(DATASET_DIR, 'train.xlsx')
     test_path = os.path.join(DATASET_DIR, 'val.xlsx')  
     IMG_DIR = os.path.join(DATASET_DIR, 'images')
 
