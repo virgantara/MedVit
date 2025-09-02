@@ -287,7 +287,7 @@ for epoch in range(NUM_EPOCHS):
         #     "num_classes": n_classes,
         #     "arch": "MedViT_small"
         # }, ckpt_path)
-        print(f"Saved new best model to {ckpt_path} (val_acc={best_acc*100:.2f}%)")
+        print(f"Saved new best model to {save_dir} (val_acc={best_acc*100:.2f}%)")
 
 wandb.finish()
 last_model_state = model.state_dict()
