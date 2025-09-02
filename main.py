@@ -293,7 +293,7 @@ wandb.finish()
 last_model_state = model.state_dict()
 save_dir = os.path.join("checkpoints",args.exp_name)
 torch.save(last_model_state, os.path.join(save_dir, 'last_model.pth'))
-print(f"Saved final model to {final_path} | best@epoch {best_epoch} = {best_acc*100:.2f}%")
+print(f"Saved final model to {save_dir} | best@epoch {best_epoch} = {best_acc*100:.2f}%")
 
 
 split = 'test'
