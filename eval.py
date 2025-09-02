@@ -25,11 +25,6 @@ import wandb
 from torchvision.transforms.transforms import Resize
 from torchvision.transforms import InterpolationMode
 
-print("PyTorch", torch.__version__)
-print("Torchvision", torchvision.__version__)
-print("Torchattacks", torchattacks.__version__)
-print("Numpy", np.__version__)
-print("Medmnist", medmnist.__version__)
 
 parser = argparse.ArgumentParser(description='BTXRD Classification')
 parser.add_argument('--model_path', type=str, default='exp', metavar='N',
@@ -137,9 +132,6 @@ train_loader = data.DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shu
 train_loader_at_eval = data.DataLoader(dataset=train_dataset, batch_size=2*BATCH_SIZE, shuffle=False)
 test_loader = data.DataLoader(dataset=test_dataset, batch_size=2*BATCH_SIZE, shuffle=False)
 
-print(train_dataset)
-print("===================")
-print(test_dataset)
 
 
 model = MedViT_small(num_classes = n_classes).to(device)
