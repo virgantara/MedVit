@@ -131,14 +131,14 @@ n_classes = 3
 
 # preprocessing
 train_transform = transforms.Compose([
-    transforms.Resize((224, 224), interpolation=InterpolationMode.BILINEAR),
+    transforms.Resize((args.img_size, args.img_size), interpolation=InterpolationMode.BILINEAR),
     transforms.Lambda(lambda image: image.convert('RGB')),
     torchvision.transforms.AugMix(),
     transforms.ToTensor(),
     transforms.Normalize(mean=[.5], std=[.5])
 ])
 test_transform = transforms.Compose([
-    transforms.Resize((224, 224), interpolation=InterpolationMode.BILINEAR),
+    transforms.Resize((args.img_size, args.img_size), interpolation=InterpolationMode.BILINEAR),
     transforms.Lambda(lambda image: image.convert('RGB')),
     transforms.ToTensor(),
     transforms.Normalize(mean=[.5], std=[.5])
