@@ -199,7 +199,7 @@ def evaluate(model, loader, criterion=None):
     model.eval()
     total, correct = 0, 0
     running_loss = 0.0
-    for x, y in loader:
+    for x, y in tqdm(loader):
         x = x.to(device)
         y = y.squeeze().long().to(device) if task != "multi-label, binary-class" else y.to(device).to(torch.float32)
         logits = model(x)
