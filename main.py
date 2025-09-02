@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data
-
+import argparse
 import torchvision.utils
 from torchvision import models
 import torchvision.datasets as dsets
@@ -21,8 +21,9 @@ from CustomDataset.datasets import BoneTumorDataset
 import torchattacks
 from torchattacks import PGD, FGSM
 from MedViT import MedViT_small, MedViT_base, MedViT_large
-
+import wandb
 from torchvision.transforms.transforms import Resize
+from torchvision.transforms import InterpolationMode
 
 print("PyTorch", torch.__version__)
 print("Torchvision", torchvision.__version__)
@@ -30,17 +31,93 @@ print("Torchattacks", torchattacks.__version__)
 print("Numpy", np.__version__)
 print("Medmnist", medmnist.__version__)
 
+parser = argparse.ArgumentParser(description='BTXRD Classification')
+parser.add_argument('--exp_name', type=str, default='exp', metavar='N',
+                    help='Name of the experiment')
+parser.add_argument('--pretrain_path', type=str, default='pretrain/yolov8n-cls.pt', metavar='N',
+                    help='Name of the experiment')
+parser.add_argument('--path_yolo_yaml', type=str, default='yolo/cfg/models/11/yolo11-cls-lka.yaml', metavar='N',
+                    help='Name of the experiment')
+parser.add_argument('--model_name', type=str, default='convnext', metavar='N',
+                    help='Name of the model')
+parser.add_argument('--yolo_scale', default='n', choices=['n','s','m','l','x'])
+parser.add_argument('--img_size', type=int, default=608, metavar='img_size',
+                    help='Size of input image)')
+parser.add_argument('--batch_size', type=int, default=32, metavar='batch_size',
+                    help='Size of batch)')
+parser.add_argument('--test_batch_size', type=int, default=32, metavar='batch_size',
+                    help='Size of batch)')
+parser.add_argument('--epochs', type=int, default=300, metavar='N',
+                    help='number of episode to train')
+parser.add_argument('--use_sgd', action='store_true', default=False, help='Use SGD')
+parser.add_argument('--scenario', default='A', type=str,help='A=no clahe, B=clahe as weak aug, C=clahe as preprocessing')
+parser.add_argument('--use_balanced_weight', action='store_true', default=False, help='Use Weight Balancing')
+parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+                    help='learning rate (default: 0.001, 0.1 if using sgd)')
+parser.add_argument('--dropout', type=float, default=0.2, metavar='LR',
+                    help='Dropout')
+parser.add_argument('--momentum', type=float, default=0.9, metavar='M',
+                    help='SGD momentum (default: 0.9)')
+parser.add_argument('--no_cuda', type=bool, default=False,
+                    help='enables CUDA training')
+parser.add_argument('--seed', type=int, default=1, metavar='S',
+                    help='random seed (default: 1)')
+parser.add_argument('--num_worker', type=int, default=4, metavar='S',
+                    help='Num of Worker')
+parser.add_argument('--eval', type=bool,  default=False,
+                    help='evaluate the model')
+parser.add_argument('--project_name', type=str, default='BTXRD', metavar='N',
+                    help='Name of the Project WANDB')
+parser.add_argument('--early_stop_patience', type=int, default=10,
+                help='Stop if no Top-1 improvement for this many evals')
+
+parser.add_argument('--use_clahe', action='store_true')
+
+parser.add_argument('--clahe_p', type=float, default=0.25)
+
+# Wavelet toggles
+parser.add_argument('--use_wavelet', action='store_true')
+parser.add_argument('--wavelet_name', type=str, default='db2')
+parser.add_argument('--wavelet_level', type=int, default=2)
+parser.add_argument('--wavelet_p', type=float, default=1.0)  # 1.0 => deterministic preprocessing
+
+# Unsharp toggles
+parser.add_argument('--use_unsharp', action='store_true')
+parser.add_argument('--unsharp_amount', type=float, default=0.7)
+parser.add_argument('--unsharp_radius', type=float, default=1.0)
+parser.add_argument('--unsharp_threshold', type=int, default=2)
+parser.add_argument('--unsharp_p', type=float, default=1.0)
+
+parser.add_argument('--use_center_dataset_split', action='store_true', default=False, help='Use Center 1,2 as train, 3 as test')
+
+# Structure map (optional)
+parser.add_argument('--use_structuremap', action='store_true')
+args = parser.parse_args()
+
 # data_flag = 'retinamnist'
 # [tissuemnist, pathmnist, chestmnist, dermamnist, octmnist,
 # pnemoniamnist, retinamnist, breastmnist, bloodmnist, tissuemnist, organamnist, organcmnist, organsmnist]
 # download = True
 
-NUM_EPOCHS = 10
+NUM_EPOCHS = args.epochs
 BATCH_SIZE = 10
 lr = 0.005
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+wandb.init(
+    project=args.project_name, 
+    name=f"{args.exp_name}",
+    config={
+        "epochs": NUM_EPOCHS,
+        "batch_size": args.batch_size,
+        "lr": args.lr,
+        "architecture": args.model_name,
+        "optimizer": "adam"
+    }
+)
+
+wandb_log = {} 
 # info = INFO[data_flag]
 # task = info['task']
 # n_channels = info['n_channels']
@@ -54,14 +131,14 @@ n_classes = 3
 
 # preprocessing
 train_transform = transforms.Compose([
-    transforms.Resize(224),
+    transforms.Resize((224, 224), interpolation=InterpolationMode.BILINEAR),
     transforms.Lambda(lambda image: image.convert('RGB')),
     torchvision.transforms.AugMix(),
     transforms.ToTensor(),
     transforms.Normalize(mean=[.5], std=[.5])
 ])
 test_transform = transforms.Compose([
-    transforms.Resize(224),
+    transforms.Resize((224, 224), interpolation=InterpolationMode.BILINEAR),
     transforms.Lambda(lambda image: image.convert('RGB')),
     transforms.ToTensor(),
     transforms.Normalize(mean=[.5], std=[.5])
@@ -104,6 +181,7 @@ print(test_dataset)
 model = MedViT_small(num_classes = n_classes).to(device)
 #model = MedViT_base(num_classes = n_classes).cuda()
 #model = MedViT_large(num_classes = n_classes).cuda()
+wandb.watch(model)
 
 task = ''
 # define loss function and optimizer
@@ -173,6 +251,16 @@ for epoch in range(NUM_EPOCHS):
     val_acc, val_loss = evaluate(model, test_loader, criterion)
     print(f"  train_loss={train_loss:.4f} | val_loss={val_loss:.4f} | val_acc={val_acc*100:.2f}%")
 
+    wandb_log = {
+        "epoch": epoch + 1,
+        "train_loss": train_loss,
+        "val_loss": val_loss,
+        "top1_accuracy": val_acc,
+        # "top5_accuracy": 0,
+        # "epochs_since_improve": epochs_since_improve,
+        # "best_top1_accuracy_so_far": best_top1_acc
+    }
+    wandb.log(wandb_log)
     # ---- SAVE BEST CHECKPOINT ----
     if val_acc > best_acc:
         best_acc = val_acc
@@ -188,6 +276,8 @@ for epoch in range(NUM_EPOCHS):
             "arch": "MedViT_small"
         }, ckpt_path)
         print(f"Saved new best model to {ckpt_path} (val_acc={best_acc*100:.2f}%)")
+
+wandb.finish()
 
 final_path = os.path.join(ckpt_dir, "last.pt")
 torch.save({
