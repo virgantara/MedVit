@@ -27,7 +27,6 @@ from sklearn.metrics import (
 import matplotlib
 matplotlib.use("Agg")  # for headless servers
 import matplotlib.pyplot as plt
-from van import VAN, load_model_weights
 from timm.models.vision_transformer import _cfg
 from functools import partial
 from transforms_factory import build_transforms
