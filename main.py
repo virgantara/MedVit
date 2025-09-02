@@ -268,30 +268,22 @@ for epoch in range(NUM_EPOCHS):
     if val_acc > best_acc:
         best_acc = val_acc
         best_epoch = epoch + 1
-        ckpt_path = os.path.join(ckpt_dir, "best.pt")
-        torch.save({
-            "epoch": best_epoch,
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
-            "best_acc": best_acc,
-            "val_loss": val_loss,
-            "num_classes": n_classes,
-            "arch": "MedViT_small"
-        }, ckpt_path)
+        save_dir = os.path.join("checkpoints",args.exp_name)
+        torch.save(best_model_state, os.path.join(save_dir, 'best_model.pth'))
+        # torch.save({
+        #     "epoch": best_epoch,
+        #     "model_state_dict": model.state_dict(),
+        #     "optimizer_state_dict": optimizer.state_dict(),
+        #     "best_acc": best_acc,
+        #     "val_loss": val_loss,
+        #     "num_classes": n_classes,
+        #     "arch": "MedViT_small"
+        # }, ckpt_path)
         print(f"Saved new best model to {ckpt_path} (val_acc={best_acc*100:.2f}%)")
 
 wandb.finish()
-
-final_path = os.path.join(ckpt_dir, "last.pt")
-torch.save({
-    "epoch": NUM_EPOCHS,
-    "model_state_dict": model.state_dict(),
-    "optimizer_state_dict": optimizer.state_dict(),
-    "best_acc": best_acc,
-    "best_epoch": best_epoch,
-    "num_classes": n_classes,
-    "arch": "MedViT_small"
-}, final_path)
+save_dir = os.path.join("checkpoints",args.exp_name)
+torch.save(best_model_state, os.path.join(save_dir, 'last_model.pth'))
 print(f"Saved final model to {final_path} | best@epoch {best_epoch} = {best_acc*100:.2f}%")
 
 
