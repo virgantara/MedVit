@@ -32,7 +32,7 @@ print("Numpy", np.__version__)
 print("Medmnist", medmnist.__version__)
 
 parser = argparse.ArgumentParser(description='BTXRD Classification')
-parser.add_argument('--exp_name', type=str, default='exp', metavar='N',
+parser.add_argument('--model_path', type=str, default='exp', metavar='N',
                     help='Name of the experiment')
 parser.add_argument('--pretrain_path', type=str, default='pretrain/yolov8n-cls.pt', metavar='N',
                     help='Name of the experiment')
@@ -150,6 +150,8 @@ print(test_dataset)
 
 
 model = MedViT_small(num_classes = n_classes).to(device)
+
+model.load_state_dict(torch.load(args.model_path, weights_only=True))
 #model = MedViT_base(num_classes = n_classes).cuda()
 #model = MedViT_large(num_classes = n_classes).cuda()
 
