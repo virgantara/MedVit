@@ -219,6 +219,9 @@ def evaluate(model, loader, criterion=None):
     acc = correct / max(total, 1)
     return acc, avg_loss
 
+best_acc = -1.0
+best_epoch = -1
+
 for epoch in range(NUM_EPOCHS):
     train_correct = 0
     train_total = 0
