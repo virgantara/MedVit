@@ -72,7 +72,7 @@ parser.add_argument('--project_name', type=str, default='BTXRD', metavar='N',
 args = parser.parse_args()
 
 
-# data_flag = 'retinamnist'
+data_flag = 'btxrd'
 # [tissuemnist, pathmnist, chestmnist, dermamnist, octmnist,
 # pnemoniamnist, retinamnist, breastmnist, bloodmnist, tissuemnist, organamnist, organcmnist, organsmnist]
 # download = True
@@ -166,7 +166,7 @@ y_score = torch.tensor([])
 data_loader = train_loader_at_eval if split == 'train' else test_loader
 
 with torch.no_grad():
-    for inputs, targets in data_loader:
+    for inputs, targets in tqdm(data_loader):
         inputs = inputs.cuda()
         outputs = model(inputs)
         outputs = outputs.softmax(dim=-1)
@@ -188,7 +188,7 @@ total = 0
 
 atk = FGSM(model, eps=0.01)
 
-for images, labels in test_loader:
+for images, labels in tqdm(test_loader):
     labels = labels.squeeze(1)
     images = atk(images, labels).cuda()
     outputs = model(images)
