@@ -145,7 +145,7 @@ def main(args):
     y_labels = test_dataset.df['label'].tolist()
 
     
-    
+    n_classes = 3
     model = MedViT_small(num_classes = n_classes).to(device)
     model.load_state_dict(torch.load(args.model_path, weights_only=True))
     model = model.to(torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
