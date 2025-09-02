@@ -100,7 +100,7 @@ args = parser.parse_args()
 # download = True
 
 NUM_EPOCHS = args.epochs
-BATCH_SIZE = 10
+BATCH_SIZE = args.batch_size
 lr = 0.005
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
