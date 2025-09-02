@@ -9,6 +9,7 @@ import torch.nn as nn
 from torchvision import models
 from tqdm import tqdm
 
+from torchvision.transforms import InterpolationMode
 from MedViT import MedViT_small, MedViT_base, MedViT_large
 
 import random
